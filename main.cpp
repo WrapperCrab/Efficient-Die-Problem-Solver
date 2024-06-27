@@ -88,7 +88,7 @@ int find_most_efficient_method(int n,int b){
 	while (true){
 		//this while loop is just a fancy for loop with dynamic bound, so update r and check bound
 		r++;
-		if (r>=rUpperBound){
+		if (r>rUpperBound){
 			break;
 		}
 		//calculate values for this r
