@@ -8,6 +8,13 @@
 //function prototypes
 void do_efficiency_problem();
 int find_most_efficient_method(int,int);
+void do_expected_rolls_problem();
+
+int get_user_num_sides();
+int get_user_numerator();
+int get_user_denominator(int);
+int get_user_scale_factor();
+
 int num_rolls(int,int,int v=1);
 float prob_retry(int,int,int v=1);
 float expected_num_rolls(int,int,int v=1);
@@ -17,9 +24,9 @@ int main(){
 	while (keepgoing){
 		std::cout << "What would you like to do?\n";
 		std::cout << "1) Given a die and a probability, find most efficient method\n";
-		// std::cout << "2) Given a die and an unsimplified probability, find expected number of rolls\n";
+		std::cout << "2) Given a die, a probability, and a scale factor, find expected number of rolls\n";
 		std::cout << "0) no\n";
-		std::string response;
+		std::string response = "0";
 		std::cin >> response;
 
 		if (response.compare("0")==0){
@@ -27,57 +34,41 @@ int main(){
 			keepgoing = false;
 		}else if (response.compare("1")==0){
 			do_efficiency_problem();
-		// }else if (response.compare("2")==0){
-		// 	do_expected_rolls_problem();
+		}else if (response.compare("2")==0){
+			do_expected_rolls_problem();
 		}else{
-			std::cout << "try again\n";
+			std::cout << "Error: You must type the number for one of the options.\n\n";
 		}
 	}
 }
 
 void do_efficiency_problem(){
-	//!!!Add some input sanitization and better error codes
-	//ask user for number of sides on die
-	int n;
-	std::cout << "Enter the number of sides on your die: ";
-	std::cin >> n;
-	if (n<2){
-		std::cout << "No\n";
-		return;
-	}
-	//ask user for numerator of wanted probability (integer)
-	int a;
-	std::cout << "Enter the numerator of your wanted probability: ";
-	std::cin >> a;
-	if (a<0){
-		std::cout << "No\n";
-		return;
-	}
-	//ask user for denominator of wanted probability (integer)
-	int b;
-	std::cout << "Enter the denominator of your wanted probability: ";
-	std::cin >> b;
-	if (b<1 || a>b){
-		std::cout << "No\n";
-		return;
-	}
+	//get user input
+	int n = get_user_num_sides();
+	if (n==-1){return;}
+	int a = get_user_numerator();
+	if (a==-1){return;}
+	int b = get_user_denominator(a);
+	if (b==-1){return;}
 	//reduce the fraction
 	int gcd = std::gcd(a,b);
 	a = a/gcd;
 	b = b/gcd;
-
+	//find the solution
 	int v = find_most_efficient_method(n,b);
 	int r = num_rolls(n,b,v);
 	float q = prob_retry(n,b,v);
 	float Ex = expected_num_rolls(n,b,v);
-
 	//output answer to user
 	std::cout<<"\nThe best method to simulate a probability of "<<a<<"/"<<b<<
 		" with a die of "<<n<<" sides is to roll the die "<<r<<" times to generate a "<<
 		r<<"-digit result in base "<<n<<".\n\n";
 	std::cout<<"If 1<=result<="<<a*v<<" then it is a success!\n";
 	std::cout<<"If "<<a*v<<"<result<="<<b*v<<" then it is a failure.\n";
-	std::cout<<"Otherwise, you must retry the simulation.\n\n";
+	if (b*v!=pow(n,r)){
+		std::cout<<"If "<<b*v<<"<result<="<<pow(n,r)<<" you must retry the simulation.\n";
+	}
+	std::cout<<"\n";
 	std::cout<<"With this method, the Expected number of rolls is "<<Ex<<
 		" and the probability to retry in a single attempt is "<<q<<"\n\n";
 }
@@ -95,7 +86,7 @@ int find_most_efficient_method(int n,int b){
 	int rUpperBound = floor(bestEx);
 	int r=r1;//this is the r we are testing at each step of the while loop
 	while (true){
-		//this while loop is a fancy for loop, so update r and check bound
+		//this while loop is just a fancy for loop with dynamic bound, so update r and check bound
 		r++;
 		if (r>=rUpperBound){
 			break;
@@ -114,29 +105,112 @@ int find_most_efficient_method(int n,int b){
 	}
 	return bestV;
 }
-// void do_expected_rolls_problem(){
-// 	//ask user for number of sides on die
-// 	int sides;
-// 	std::cout << "Enter the number of sides on your die: ";
-// 	std::cin >> sides;
-// 	if (sides<2){
-// 	std::cout << "no\n";
-// 	break;
-// 	}
-// 	//ask user for denominator of wanted probability (integer)
-// 	int b;
-// 	std::cout << "Enter the denominator of your wanted probability: ";
-// 	std::cin >> b;
-// 	if (b<1){
-// 	std::cout << "no\n";
-// 	break;
-// 	}
-// 	//we have what we need. Let's calculate the expected number of rolls
-// 	float expected = expectedRolls(sides,b,1);
-// 	float prob = probReroll(sides,b,1);
-// 	std::cout << "the expected number of rolls is "<< expected << "\n";
-// 	std::cout << "the probability for reroll is "<< prob << "\n";
-// }
+void do_expected_rolls_problem(){
+	//get user input
+	int n = get_user_num_sides();
+	if (n==-1){return;}
+	int a = get_user_numerator();
+	if (a==-1){return;}
+	int b = get_user_denominator(a);
+	if (b==-1){return;}
+	int v = get_user_scale_factor();
+	if (v==-1){return;}
+	//reduce the fraction
+	int gcd = std::gcd(a,b);
+	a = a/gcd;
+	b = b/gcd;
+	//find the solution
+	int r = num_rolls(n,b,v);
+	float q = prob_retry(n,b,v);
+	float Ex = expected_num_rolls(n,b,v);
+	//output answer to user
+	std::cout<<"\nIn a simulation of "<<a<<"/"<<b<<" with a die of "<<n<<" sides and a scale factor of "<<v<<
+		" you roll the die "<<r<<" times to generate a "<<
+		r<<"-digit result in base "<<n<<".\n\n";
+	std::cout<<"If 1<=result<="<<a*v<<" then it is a success!\n";
+	std::cout<<"If "<<a*v<<"<result<="<<b*v<<" then it is a failure.\n";
+	if (b*v!=pow(n,r)){
+		std::cout<<"If "<<b*v<<"<result<="<<pow(n,r)<<" you must retry the simulation.\n";
+	}
+	std::cout<<"\n";
+	std::cout<<"With this method, the Expected number of rolls is "<<Ex<<
+		" and the probability to retry in a single attempt is "<<q<<"\n\n";
+}
+
+//user input functions
+int get_user_num_sides(){
+	//ask user for number of sides on die
+	int n;
+	std::cout << "Enter the number of sides on your die: ";
+	std::cin >> n;
+	if (std::cin.fail()){
+		std::cout<<"Error: Your die must have an integer number of sides.\n\n";
+		std::cin.clear();
+		std::cin.ignore(100,'\n');
+		return -1;
+	}
+	if (n<2){
+		std::cout << "Error: Your die must have at least 2 sides\n\n";
+		return -1;
+	}
+	return n;
+}
+int get_user_numerator(){
+	//ask user for numerator of wanted probability (integer)
+	int a;
+	std::cout << "Enter the numerator of your wanted probability: ";
+	std::cin >> a;
+	if (std::cin.fail()){
+		std::cout<<"Error: Your numerator must be an integer.\n\n";
+		std::cin.clear();
+		std::cin.ignore(100,'\n');
+		return -1;
+	}
+	if (a<0){
+		std::cout << "Error: Your numerator must be at least 0.\n\n";
+		return -1;
+	}
+	return a;
+}
+int get_user_denominator(int a){
+	//ask user for denominator of wanted probability (integer)
+	int b;
+	std::cout << "Enter the denominator of your wanted probability: ";
+	std::cin >> b;
+	if (std::cin.fail()){
+		std::cout<<"Error: Your denominator must be an integer.\n\n";
+		std::cin.clear();
+		std::cin.ignore(100,'\n');
+		return -1;
+	}
+	if (b==0){
+		std::cout << "Error: Your denominator cannot be 0.\n\n";
+		return -1;
+	}
+	if (b<a){
+		std::cout << "Error: Your denominator must be at least as big as your numerator.\n\n";
+		return -1;
+	}
+	return b;
+}
+int get_user_scale_factor(){
+	//ask user for scale factor
+	int v;
+	std::cout << "Enter the scale factor you'd like to use: ";
+	std::cin >> v;
+	if (std::cin.fail()){
+		std::cout<<"Error: Your scale factor must be an integer.\n\n";
+		std::cin.clear();
+		std::cin.ignore(100,'\n');
+		return -1;
+	}
+	if (v<1){
+		std::cout << "Error: Your die must be at least 1.\n\n";
+		return -1;
+	}
+	return v;
+}
+
 //calculation funcs
 int num_rolls(int n,int b,int v){
 	//calculates the number of rolls for a single simulation attempt with the given values
