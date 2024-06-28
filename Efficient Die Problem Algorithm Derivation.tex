@@ -1,0 +1,174 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\title{Efficient Die Problem Algorithm}
+\author{Winter Cross}
+\date{June 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{The Goal of this Algorithm}
+All information in this section is also explained in the README.
+
+\subsection{Any Die can Simulate Any Rational Probability}
+Imagine you are playing an rpg where you want a player to have a $1$ in $5$ chance of success and a $4$ in $5$ chance of failure.
+Easy enough if you have a $5$-sided die lying around, but unfortunately, you only have a coin!\newline
+Luckily, it's still possible and not even that hard.\newline
+
+What you do is flip the coin $3$ times, keeping track of the results each time.\newline
+Let's say that tails is $0$ and heads is $1$.\newline
+From our flip, we can create a $3$-digit binary number. Suppose we rolled $101$ which is $5$ in decimal.\newline
+Then, we simply follow this algorithm:\newline
+
+\noindent
+if $1=result$, then it's a success!\newline
+if $1<result\leq5$, then it's a failure.\newline
+if $5<result\leq8$, then we must retry the simulation.\newline
+
+And this will simulate a probability of $1/5$ with a coin. The average number of rolls this will take is $4.8$.\newline
+
+This idea can be generalized to any die with at least $2$ sides, and any rational probability.
+
+\subsection{What is there to Solve?}
+Consider the example from the previous section.\newline
+What if instead of thinking of the probability as 1/5, we thought of it as 3/15?\newline
+
+Then, we could flip our coin 4 times to get a number 1 to 16.\newline
+
+\noindent
+if $1\leq result\leq 3$, then it's a success!\newline
+if $3<result\leq 15$, then it's a failure.\newline
+if $result=16$, then we must retry the simulation.\newline
+
+This also simulates a probability of 1/5 with a coin. However, the probability to retry is much lower, and as such, the average number of needed rolls is only 4.26667 which is smaller than the previous strategy.\newline
+
+So, this script finds the most efficient way to simulate a given probability with a given die.\newline
+
+\noindent
+It optimizes for: (ties are broken by following list item)\newline
+\begin{enumerate}
+    \item Lowest Expected Number of Rolls
+    \item Lowest Probability for Retry
+    \item Lowest Number of Rolls per Attempt
+\end{enumerate}
+
+\section{Finding the Algorithm}
+This section goes through a derivation of the algorithm used in this script.
+
+\subsection{Variables}
+We'll start by defining some of the variables we will be using:\newline
+
+\noindent
+$n=$ number of sides on the die \newline
+$a/b=$ the probability to simulate as a fraction of two integers\newline
+$r=$ the number of rolls used in one attempt of a simulation\newline
+$p=$ the probability that a simulation attempt ends in success or failure\newline
+$q=1-p=$ the probability of needing to retry after one simulation attempt\newline
+$E=$ the expected number of rolls for a strategy\newline
+$v=$ the scaling factor used for a strategy
+
+\subsection{Categorizing All Strategies}
+In order to find the best strategy, we need to understand all of the strategies that are possible.
+In the example in the README, we analyzed two strategies for simulating a probability of $1/5$ with a coin ($n=2$).
+
+We found that viewing $1/5$ as $3/15$ created a new strategy that was actually more efficient than the first.
+
+Given any unsimplified fraction $a/b$, a die with $n$ sides, and a satisfactory number of rolls, $r$, we can create a unique strategy like so:\newline
+
+\noindent
+Roll the die $r$ times to get an $r$-digit number in base $n$.\newline
+If $1\leq result \leq a$, it's a success\newline
+If $a<result \leq b$, it's a failure\newline
+If $b< result \leq n^r$, you must retry the strategy\newline
+
+Not all values of $r$ work. We need at least as many outcomes as the denominator $b$, so we must find a value $r$ such that rolling $n$ $r$ times results in a value $\geq b$. In math,
+
+$$n^r\geq b$$
+$$r\geq \log_n b$$
+$$r\geq\lceil\log_n b\rceil$$
+
+But not all of these $r$-values give worthwhile strategies. Consider the simple example $n=2, a=1, b=3, r=2$.\newline
+If $1\leq result \leq 1$, it's a success\newline
+If $1<result \leq 3$, it's a failure\newline
+If $3< result \leq 4$, you must retry the strategy\newline
+
+This strategy has a chance for failure of $q=0.25$.
+
+Now, consider if we changed nothing but increased the number of rolls to $3$. Then we have \newline
+If $1\leq result \leq 1$, it's a success\newline
+If $1<result \leq 3$, it's a failure\newline
+If $3< result \leq 8$, you must retry the strategy\newline
+
+Which is very similar, but has a huge failure rate of $1/2$.
+
+From this, hopefully it is obvious that it is always in your best interest to take the lowest $r$ value as possible. Thus, we can state
+
+$$r=r(a,b,n)=\lceil\log_n b\rceil$$
+
+So, we can create a unique strategy by taking the values $a, b,$ and $n$. Now, our goal is to find the best of the strategies where $a/b$ is equal to our wanted probability.
+
+\subsection{The Role of the Scaling Factor}
+All fractions that are equal to $a/b$ can be described with a scaling factor $v$ so that our new fraction is $va/vb$. The problem we are trying to solve is, given a probability $a/b$ where $\gcd(a,b)=1$ and a die of $n$ sides, what value $v$ gives the strategy with the lowest expected number of rolls?
+
+\subsection{Strategy Formulae}
+given $n, a,$ and $b$, and calculating $r$ as given above, we can calculate the expected number of rolls for the resulting strategy.\newline
+
+The probability to finish a strategy on one attempt is $p=\frac{b}{n^r}$. \newline
+
+The probability of retrying is $q=1-p$ \newline
+
+Finishing on the first attempt results in $r$ rolls, $2r$ after 2, $3r$ after 3 and so on. Thus, we arrive at the sum
+
+$$E=E(a,b,n) = pr+pq2r+pq^23r+pq^34r+...$$
+$$= \sum_{i=0}^{i=\infty}pq^i(i+1)r$$
+$$= pr\sum_{i=0}^{i=\infty}q^i(i+1)$$
+$$=pr\frac{1}{p^2}$$
+$$=\frac{r}{p} = \frac{rn^r}{b}$$
+
+When we apply a scaling factor of $v$, the expected number of rolls is
+
+$$E(av,bv,n) = \frac{r_vn^{r_v}}{bv}$$
+where
+$$r_v=r(av,bv,n)=\lceil\log_n bv\rceil$$
+
+\subsection{Limits on $v$}
+There are infinity possible values of $v$, so we can't possibly check them all. Instead, we must place some bounds on $v$ to limit our search.\newline
+
+There are 2 useful limits we can put on $v$ that will make our search much shorter
+
+\subsubsection{Limit 1: A $v$ for each $r$}
+Suppose we have two scaling factors $v_1<v_2$ such that 
+$$r(av_1,bv_1,n)=r(av_2,bv_2,n)=r$$
+This is a common scenario, for example $a=1,b=2,n=6$ with $v_1=1$ and $v_2=2$ both only require $1$ roll of the die.\newline
+
+Calculating our expected number of rolls for both scaling factors, we get
+$$E_1=E(av_1,bv_1,n)=\frac{rn^{r}}{bv_1}$$
+$$E_2=E(av_2,bv_2,n)=\frac{rn^{r}}{bv_2}$$
+Since $v_1<v_2$, we get that $E_2<E_1$. Thus, we only care about one $v$-value per $r$-value, that being the largest $v$ that uses $r$ rolls.\newline
+
+An equation for the largest $v$-value is $v=\lfloor\frac{n^r}{b}\rfloor$\newline
+
+This means, that it we can iterate over $r$-values instead of $v$-values. But there are still infinity possible $r$'s, so we need another limit on our search.
+
+\subsubsection{Limit 2: An Upper Bound}
+Given that we can iterate over $r$, the first strategy we'll be interested in is the best strategy for the lowest possible value of $r$.\newline
+
+The lowest value of $r$ is $r_1=r(a,b,n)$, so the first value of $v$ to check is $v_1=\lfloor\frac{n^{r_1}}{b}\rfloor$. Then, our first Expected value is $E_1=E(av_1,bv_1,n)$.\newline
+
+$E_1$ may or may not be the best that we can do. But, consider the strategy that takes $r$ rolls where $r>E_1$. Then, even the first attempt alone uses more than $E_1$ rolls, meaning all strategies that take $r$ or more rolls are worse than the strategy we've already found!\newline
+
+We only need to check the values of $r$ such that $r\leq \lfloor E_1\rfloor$. The list of $v$ values we must check looks something like this:
+
+$$v=\lceil \frac{n^{r_1}}{b} \rceil,\lceil \frac{n^{r_1+1}}{b} \rceil, \lceil \frac{n^{r_1+2}}{b} \rceil, ... , \lceil \frac{n^{\lfloor E_1 \rfloor}}{b} \rceil $$
+
+At last we have a finite list of items to check!
+
+\subsection{The Final Algorithm}
+So, our final algorithm starts by calculating $r_1, v_1,$ and $E_1$. Then, it iterates over $r$ to check the expected number of rolls for each strategy. If a more efficient strategy is found, the values are saved, and the upper bound on $r$ is lowered by the new $E$-value. Once the upper bound is reached, we know that we've found the best strategy and print the result in a readable format to the user. 
+
+
+
+\end{document}

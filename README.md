@@ -44,3 +44,7 @@ It optimizes for: (ties are broken by following list item)
 1. Lowest Expected Number of Rolls
 2. Lowest Probability for Retry
 3. Lowest Number of Rolls per Attempt
+
+### How do I Know this Algorithm Works?
+A fellow nerd I see!\
+There is a .tex document in the files that goes through a derivation of the algorithm used in main.cpp. 
