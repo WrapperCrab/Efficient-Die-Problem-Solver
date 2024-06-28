@@ -1,5 +1,5 @@
 # Efficient Die Problem Solver
-## A Specific Solution to a Very Specific Problem
+## A Solution to a Very Specific Problem
 Given an n-sided die and a rational probability, this script finds the best way to simulate that probability with the die.
 
 ### How to Use
@@ -10,7 +10,7 @@ Choice 2 analyzes a specific strategy given by the user.
 ### Any Die can Simulate Any Rational Probability
 Imagine you are playing an rpg where you want a player to have a 1 in 5 chance of success and a 4 in 5 chance of failure.\
 Easy enough if you have a 5-sided die lying around, but unfortunately, you only have a coin!\
-Lucky for you, it's still possible and not even that hard.
+Luckily, it's still possible.
 
 What you do is flip the coin 3 times, keeping track of the results each time.\
 Let's say that tails is 0 and heads is 1.\
@@ -38,7 +38,7 @@ if result=16, then we must retry the simulation.
 This also simulates a probability of 1/5 with a coin. 
 However, the probability to retry is much lower, and as such, the average number of needed rolls is only 4.26667 which is smaller than the previous strategy.
 
-So, this script finds the most efficient way to simulate a given probability with a given coin.
+So, this script finds the most efficient way to simulate a given probability with a given die.
 
 It optimizes for: (ties are broken by following list item)
 1. Lowest Expected Number of Rolls
